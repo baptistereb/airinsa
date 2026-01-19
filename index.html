@@ -249,7 +249,7 @@
     </main>
 
     <script>
-        const BUILDINGS = ["Bât. 1 (Admin)", "Bât. 2 (Génie Civil)", "Bât. 4 (Gymnase)", "Bât. 7 (Recherche)", "Bât. 8 (Bib/RU)", "Bât. 11 (Mécanique)", "Bât. 12 (Maths)", "Bât. 17 (Direction)", "Bât. 19 (GEI)", "Bât. 20 (STPI)", "Bât. 23 (CSH)", "Bât. 33 (Bio)", "Résidence R1"];
+        const BUILDINGS = ["Bât. 1 (Admin)", "Bât. 2 (Génie Civil)", "Bât. 4 (Gymnase)", "Bât. 7 (Recherche)", "Bât. 8 (Bib/RU)", "Bât. 11 (Mécanique)", "Bât. 12 (Maths)", "Bât. 17 (Direction)", "Bât. 19 (GEI)", "Bât. 20 (STPI)", "Bât. 23 (CSH)", "Bât. 33 (Bio)", "Résidence R1", "ENSEEIHT"];
         let selectedFlight = null;
 
         function escapeHTML(str) {
@@ -268,6 +268,7 @@
         }
 
         function getTravelDuration(from, to) {
+            if(from=="ENSEEIHT") return 10
             const distance = Math.abs(BUILDINGS.indexOf(from) - BUILDINGS.indexOf(to));
             return distance < 3 ? 2 : (distance < 7 ? 3 : 5);
         }
