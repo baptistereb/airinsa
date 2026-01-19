@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirINSA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .step-hidden { display: none; }
+        .bg-insa { background-color: #e4003a; }
+        .text-insa { color: #e4003a; }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background-image: url('./cover_up.jpg');
+            background-size: cover;
+            background-position: center top;
+            background-repeat: no-repeat;
+            opacity: 1; 
+        }
+
+        body { background-color: white; }
+
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticket-dashed {
+            border-top: 2px dashed #e2e8f0;
+            position: relative;
+        }
+        .ticket-dashed::before, .ticket-dashed::after {
+            content: "";
+            position: absolute;
+            top: -10px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+        }
+        .ticket-dashed::before { left: -30px; }
+        .ticket-dashed::after { right: -30px; }
+    </style>
+</head>
+<body class="min-h-screen font-sans text-slate-900">
+
+    <div id="notification" class="fixed top-5 right-5 left-5 md:left-auto md:w-96 transform translate-y-[-150%] transition-transform duration-500 z-[100] bg-slate-900 text-white p-4 rounded-xl shadow-2xl flex items-center gap-3">
+        <span id="notif-icon">🚀</span>
+        <p id="notif-message" class="text-sm font-medium"></p>
+    </div>
+
+    <nav class="bg-white/60 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.replace('index.html')">
+            <span class="text-2xl">✈️</span>
+            <span class="font-black text-xl tracking-tighter italic">Air<span class="text-insa">INSA</span></span>
+        </div>
+        <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">
+            Institution Nationale du Surmenage Aéronautique (INSA)<br>
+            <span class="text-insa">L'aviation humaniste.</span>
+        </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto pb-12 px-4">        
+        
+        <section id="step-search" class="pt-64 md:pt-80 space-y-6">
+            <div class="glass-card p-8">
+                <h1 class="text-2xl font-bold mb-6">Réservez votre vol inter-bâtiments</h1>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Départ</label>
+                            <select id="from" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-insa"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Destination</label>
+                            <select id="to" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-insa"></select>
+                        </div>
+                    </div>
+                    <button onclick="search()" class="w-full bg-insa text-white font-bold py-4 rounded-xl hover:brightness-110 transition-all shadow-lg uppercase tracking-wide">
+                        Rechercher un vol
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="step-results" class="step-hidden pt-10 space-y-4">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="font-bold text-lg text-slate-700 px-2 uppercase tracking-tight">Vols disponibles</h2>
+                <button onclick="showStep('search')" class="text-xs font-bold text-insa bg-white/80 px-3 py-1 rounded-full shadow-sm border border-slate-100 hover:bg-white">Modifier</button>
+            </div>
+            <div id="flights-list" class="space-y-3"></div>
+        </section>
+
+        <section id="step-checkout" class="step-hidden pt-10">
+            <div class="glass-card p-8">
+                <div class="flex justify-between items-start mb-6 border-b pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold">Options de vol</h2>
+                        <p id="flight-route-header" class="text-xs text-slate-400 font-bold uppercase"></p>
+                    </div>
+                    <div class="text-right">
+                        <p id="flight-id-badge" class="bg-slate-100 text-[10px] px-2 py-1 rounded font-mono font-bold"></p>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 mb-8">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Classe de voyage</label>
+                        <select id="class-select" onchange="updatePrice()" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-insa">
+                            <option value="0">Eco - en soute (Inclus)</option>
+                            <option value="1.5">Classic (+1.50 ECTS)</option>
+                            <option value="3">Business (+3.00 ECTS)</option>
+                        </select>
+                    </div>
+
+                    <label class="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-200 rounded-xl cursor-pointer hover:bg-white transition-colors">
+                        <div>
+                            <p class="text-sm font-bold">🥪 Sandwich Calimayo</p>
+                            <p class="text-[10px] text-slate-500 italic">Poulet, mayo, bonheur (+0.60 ECTS)</p>
+                        </div>
+                        <input type="checkbox" id="sandwich" onchange="updatePrice()" class="w-5 h-5 accent-insa">
+                    </label>
+
+                    <label class="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-200 rounded-xl cursor-pointer hover:bg-white transition-colors">
+                        <div>
+                            <p class="text-sm font-bold">🌱 Compensation Carbone</p>
+                            <p class="text-[10px] text-slate-500 italic">"Fait partie du groupe INSA en Lutte" (+0.20 ECTS)</p>
+                        </div>
+                        <input type="checkbox" id="co2-option" onchange="updatePrice()" class="w-5 h-5 accent-insa">
+                    </label>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-200 rounded-xl cursor-pointer hover:bg-white transition-colors">
+                            <div class="text-xs font-bold">Bagage (+1.0)</div>
+                            <input type="checkbox" id="bag" onchange="updatePrice()" class="w-5 h-5 accent-insa">
+                        </label>
+                        <label class="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-200 rounded-xl cursor-pointer hover:bg-white transition-colors">
+                            <div class="text-xs font-bold">Priorité (+0.5)</div>
+                            <input type="checkbox" id="priority" onchange="updatePrice()" class="w-5 h-5 accent-insa">
+                        </label>
+                    </div>
+                </div>
+
+                <div id="summary" class="bg-slate-900/5 p-4 rounded-2xl space-y-1 text-xs"></div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Prénom</label>
+                        <input type="text" id="pass-firstname" placeholder="Justin" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-insa">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-500 uppercase">Nom</label>
+                        <input type="text" id="pass-lastname" placeholder="Case" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-insa">
+                    </div>
+                </div>
+
+                <button onclick="confirmPay()" class="w-full mt-6 bg-insa text-white font-bold py-4 rounded-xl hover:brightness-110 transition-all shadow-lg">
+                    CONFIRMER ET RÉSERVER
+                </button>
+            </div>
+        </section>
+
+        <section id="step-ticket" class="step-hidden pt-10">
+            <div class="glass-card overflow-hidden">
+                <div class="bg-insa p-6 text-white flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest opacity-80 italic">L'aviation humaniste.</p>
+                        <h2 class="text-2xl font-black italic tracking-tighter">AirINSA</h2>
+                    </div>
+                    <div class="text-right">
+                        <p id="ticket-id" class="text-lg font-mono font-bold"></p>
+                        <p class="text-[10px] font-bold uppercase">Boarding Pass</p>
+                    </div>
+                </div>
+                
+                <div class="p-8 space-y-6">
+                    <div class="mb-6">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Passager</p>
+                        <p id="ticket-passenger-name" class="text-xl font-black uppercase text-slate-800">Le Margoulin</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="w-1/3">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Départ</p>
+                            <p id="ticket-from" class="font-bold text-sm leading-tight"></p>
+                            <p id="ticket-dep-time" class="text-2xl font-black mt-1 text-slate-900"></p>
+                            <p id="ticket-boarding-time" class="text-[10px] font-bold text-insa bg-insa/10 inline-block px-1 rounded mt-1">EMB. : 00:00</p>
+                        </div>
+                        <div class="flex-1 flex flex-col items-center px-4">
+                            <span class="text-[10px] font-bold text-insa italic">DIRECT</span>
+                            <div class="w-full h-[2px] bg-slate-200 relative my-2">
+                                <span class="absolute -top-2 left-1/2 -translate-x-1/2">✈️</span>
+                            </div>
+                        </div>
+                        <div class="w-1/3 text-right">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Arrivée</p>
+                            <p id="ticket-to" class="font-bold text-sm leading-tight"></p>
+                            <p id="ticket-arr-time" class="text-2xl font-black mt-1 text-slate-400"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 py-4 border-t border-b border-slate-100">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Porte</p>
+                            <p id="ticket-gate" class="font-black text-xl text-insa"></p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Siège</p>
+                            <p id="ticket-seat" class="font-black text-xl">20A</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Classe</p>
+                            <p id="ticket-class" class="font-black text-sm pt-1 uppercase text-slate-600"></p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 text-[10px]">
+                        <div class="bg-slate-50 p-3 rounded-xl">
+                            <p class="font-bold text-slate-400 uppercase mb-1">Options à bord</p>
+                            <ul id="ticket-options-list" class="font-bold text-slate-700"></ul>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border-l-2 border-insa">
+                            <p class="font-bold text-slate-400 uppercase mb-1">Bilan Carbone</p>
+                            <p id="ticket-co2-val" class="font-bold text-slate-800"></p>
+                            <p id="ticket-co2-status" class="text-[8px] font-bold text-insa uppercase"></p>
+                        </div>
+                    </div>
+
+                    <div class="ticket-dashed py-6 flex flex-col items-center">
+                        <div class="bg-white w-40 h-40 rounded-xl flex items-center justify-center border-2 border-slate-100 overflow-hidden shadow-inner">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.youtube.com/watch?v=dQw4w9WgXcQ" alt="QR Code">
+                        </div>
+                        <p class="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-tighter italic">Scannez à l'entrée du bâtiment</p>
+                    </div>
+
+                    <button onclick="rickroll()" class="w-full flex items-center justify-center gap-3 bg-black text-white py-4 rounded-2xl font-bold hover:scale-[1.02] transition-transform">
+                        Ajouter à Google Wallet
+                    </button>
+                </div>
+            </div>
+            <p class="text-center text-[10px] text-slate-400 mt-6 uppercase font-bold tracking-widest italic italic">L'aviation humaniste.</p>
+        </section>
+    </main>
+
+    <script>
+        const BUILDINGS = ["Bât. 1 (Admin)", "Bât. 2 (Génie Civil)", "Bât. 4 (Gymnase)", "Bât. 7 (Recherche)", "Bât. 8 (Bib/RU)", "Bât. 11 (Mécanique)", "Bât. 12 (Maths)", "Bât. 17 (Direction)", "Bât. 19 (GEI)", "Bât. 20 (STPI)", "Bât. 23 (CSH)", "Bât. 33 (Bio)", "Résidence R1"];
+        let selectedFlight = null;
+
+        function escapeHTML(str) {
+            if (!str) return "";
+            const p = document.createElement('p');
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
+        function addMinutes(time, mins) {
+            let [h, m] = time.split(':').map(Number);
+            m += mins;
+            while (m >= 60) { h++; m -= 60; }
+            while (m < 0) { h--; m += 60; }
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function getTravelDuration(from, to) {
+            const distance = Math.abs(BUILDINGS.indexOf(from) - BUILDINGS.indexOf(to));
+            return distance < 3 ? 2 : (distance < 7 ? 3 : 5);
+        }
+
+        function init() {
+            const selects = [document.getElementById('from'), document.getElementById('to')];
+            BUILDINGS.forEach(b => {
+                selects.forEach(s => s.innerHTML += `<option value="${b}">${b}</option>`);
+            });
+            document.getElementById('to').selectedIndex = 9; 
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketParam = urlParams.get('t');
+            if (ticketParam) {
+                try {
+                    const decodedData = JSON.parse(decodeURIComponent(escape(atob(ticketParam))));
+                    renderTicket(decodedData);
+                    showStep('ticket');
+                    showNotif("Ticket chargé !", "🎫");
+                } catch (e) {
+                    console.error("Erreur de décodage du ticket", e);
+                }
+            }
+        }
+
+        function showNotif(msg, icon = "🚀") {
+            const n = document.getElementById('notification');
+            document.getElementById('notif-message').innerText = msg;
+            document.getElementById('notif-icon').innerText = icon;
+            n.style.transform = "translateY(0)";
+            setTimeout(() => n.style.transform = "translateY(-150%)", 3000);
+        }
+
+        function search() {
+            const f = document.getElementById('from').value;
+            const t = document.getElementById('to').value;
+            if(f === t) return showNotif("Déjà arrivé, major !", "⚠️");
+
+            const list = document.getElementById('flights-list');
+            list.innerHTML = "";
+            const duration = getTravelDuration(f, t);
+            
+            ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"].forEach(time => {
+                const basePrice = parseFloat((Math.random() * (2) + 0.5).toFixed(2));
+                const flightId = Math.random().toString(36).substr(2, 5).toUpperCase();
+                const gate = Math.floor(Math.random() * 15) + 1;
+                const co2 = (Math.random() * 5 + 2).toFixed(1);
+                
+                list.innerHTML += `
+                    <div class="glass-card p-5 flex justify-between items-center group hover:border-insa transition-all cursor-pointer" 
+                         onclick="goToCheckout('${f}','${t}','${time}','${addMinutes(time, duration)}',${duration},${basePrice},'${flightId}','${gate}', ${co2})">
+                        <div class="flex items-center gap-6">
+                            <div class="text-center">
+                                <p class="text-xl font-black text-slate-800">${time}</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">DEP</p>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <span class="text-xs font-bold text-insa">${duration}m</span>
+                                <div class="w-12 h-[2px] bg-slate-200 relative my-1"></div>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-xl font-black text-slate-400">${addMinutes(time, duration)}</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ARR</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-black text-insa">${basePrice} ECTS</p>
+                            <button class="bg-insa text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase mt-1 opacity-80 group-hover:opacity-100">Réserver</button>
+                        </div>
+                    </div>`;
+            });
+            showStep('results');
+        }
+
+        function goToCheckout(f, t, dep, arr, dur, p, id, gate, co2) {
+            selectedFlight = { f, t, dep, arr, dur, basePrice: p, id, gate, co2 };
+            document.getElementById('flight-route-header').innerText = `${f} ➔ ${t}`;
+            document.getElementById('flight-id-badge').innerText = `VOL INSA-${id}`;
+            updatePrice();
+            showStep('checkout');
+        }
+
+        function updatePrice() {
+            if(!selectedFlight) return;
+            const classExtra = parseFloat(document.getElementById('class-select').value);
+            const bagExtra = document.getElementById('bag').checked ? 1.0 : 0;
+            const prioExtra = document.getElementById('priority').checked ? 0.5 : 0;
+            const sandwichExtra = document.getElementById('sandwich').checked ? 0.6 : 0;
+            const co2Extra = document.getElementById('co2-option').checked ? 0.2 : 0;
+            
+            const total = (selectedFlight.basePrice + classExtra + bagExtra + prioExtra + sandwichExtra + co2Extra).toFixed(2);
+
+            document.getElementById('summary').innerHTML = `
+                <div class="flex justify-between"><span>Tarif de base</span><span class="font-bold">${selectedFlight.basePrice.toFixed(2)} ECTS</span></div>
+                ${classExtra > 0 ? `<div class="flex justify-between text-insa"><span>Classe</span><span class="font-bold">+${classExtra.toFixed(2)} ECTS</span></div>` : ''}
+                ${sandwichExtra > 0 ? `<div class="flex justify-between text-insa"><span>Sandwich Calimayo</span><span class="font-bold">+0.60 ECTS</span></div>` : ''}
+                ${co2Extra > 0 ? `<div class="flex justify-between text-insa"><span>Compens. INSA en Lutte</span><span class="font-bold">+0.20 ECTS</span></div>` : ''}
+                ${bagExtra > 0 ? `<div class="flex justify-between text-insa"><span>Sac à dos</span><span class="font-bold">+1.00 ECTS</span></div>` : ''}
+                ${prioExtra > 0 ? `<div class="flex justify-between text-insa"><span>Priorité</span><span class="font-bold">+0.50 ECTS</span></div>` : ''}
+                <div class="flex justify-between text-sm font-bold pt-2 border-t border-slate-200 mt-2 text-slate-900"><span>Total</span><span>${total} ECTS</span></div>
+            `;
+        }
+
+        function renderTicket(data) {
+            // Utilisation de escapeHTML sur TOUTES les chaînes de caractères
+            document.getElementById('ticket-passenger-name').innerText = escapeHTML(`${data.fn} ${data.ln}`);
+            document.getElementById('ticket-from').innerText = escapeHTML(data.f);
+            document.getElementById('ticket-to').innerText = escapeHTML(data.t);
+            document.getElementById('ticket-dep-time').innerText = escapeHTML(data.dep);
+            document.getElementById('ticket-boarding-time').innerText = "EMB. : " + addMinutes(data.dep, -5);
+            document.getElementById('ticket-arr-time').innerText = escapeHTML(data.arr);
+            document.getElementById('ticket-gate').innerText = escapeHTML(data.gate);
+            document.getElementById('ticket-id').innerText = `INSA-${escapeHTML(data.id)}`;
+            document.getElementById('ticket-class').innerText = escapeHTML(data.cls);
+
+            const optList = document.getElementById('ticket-options-list');
+            optList.innerHTML = "";
+            if(data.sand) optList.innerHTML += "<li>• Sandwich Calimayo</li>";
+            if(data.bag) optList.innerHTML += "<li>• Bagage en soute</li>";
+            if(data.prio) optList.innerHTML += "<li>• Coupe-file</li>";
+            if(optList.innerHTML === "") optList.innerHTML = "<li>Aucune option</li>";
+
+            document.getElementById('ticket-co2-val').innerText = escapeHTML(data.co2v) + " kg CO2";
+            document.getElementById('ticket-co2-status').innerText = data.co2c ? "Compensé (INSA en Lutte)" : "Non compensé";
+            document.getElementById('ticket-co2-status').className = data.co2c ? "text-[8px] font-bold text-green-600 uppercase" : "text-[8px] font-bold text-insa uppercase";
+            
+            // Mise à jour du QR Code avec l'URL actuelle
+            const qrImg = document.querySelector('#step-ticket img');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
+        }
+
+        function confirmPay() {
+            showNotif("Validation scolarité...", "💳");
+
+            const firstName = document.getElementById('pass-firstname').value || "Justin";
+            const lastName = document.getElementById('pass-lastname').value || "Case";
+            
+            // Construction de l'objet de données
+            const ticketData = {
+                fn: firstName,
+                ln: lastName,
+                f: selectedFlight.f,
+                t: selectedFlight.t,
+                dep: selectedFlight.dep,
+                arr: selectedFlight.arr,
+                gate: "G" + selectedFlight.gate,
+                id: selectedFlight.id,
+                cls: document.getElementById('class-select').options[document.getElementById('class-select').selectedIndex].text.split(' ')[0],
+                sand: document.getElementById('sandwich').checked,
+                bag: document.getElementById('bag').checked,
+                prio: document.getElementById('priority').checked,
+                co2v: selectedFlight.co2,
+                co2c: document.getElementById('co2-option').checked
+            };
+
+            // Encodage en Base64 (supportant les accents)
+            const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(ticketData))));
+            
+            // Mise à jour de l'URL (permet de copier le lien)
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?t=' + base64;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+
+            renderTicket(ticketData);
+
+            setTimeout(() => {
+                showStep('ticket');
+                showNotif("Lien de partage généré !", "🔗");
+            }, 1500);
+        }
+
+        function rickroll() {
+            showNotif("Synchronisation Wallet...", "🔄");
+            setTimeout(() => {
+                window.location.href = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+            }, 800);
+        }
+
+        function showStep(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('step-hidden'));
+            document.getElementById('step-' + id).classList.remove('step-hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        init();
+    </script>
+</body>
+</html>
