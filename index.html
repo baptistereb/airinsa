@@ -393,11 +393,7 @@
             document.getElementById('ticket-co2-val').innerText = escapeHTML(data.co2v) + " kg CO2";
             document.getElementById('ticket-co2-status').innerText = data.co2c ? "Compensé (INSA en Lutte)" : "Non compensé";
             document.getElementById('ticket-co2-status').className = data.co2c ? "text-[8px] font-bold text-green-600 uppercase" : "text-[8px] font-bold text-insa uppercase";
-            
-            // Mise à jour du QR Code avec l'URL actuelle
-            const qrImg = document.querySelector('#step-ticket img');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.href)}`;
-        }
+            }
 
         function confirmPay() {
             showNotif("Validation scolarité...", "💳");
